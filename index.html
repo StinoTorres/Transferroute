@@ -128,6 +128,17 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
 .sheet ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .lvl{display:inline-block;font:600 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid currentColor;margin-left:4px}
 .lvl-1{color:var(--good)}.lvl-2{color:var(--route)}.lvl-3{color:var(--bad)}
+.ios-install{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:35;
+  background:var(--panel);color:var(--fg);border:2px solid var(--route);border-radius:16px;padding:14px 44px 14px 14px;box-shadow:0 12px 32px rgba(0,0,0,.28);
+  display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;max-width:520px;margin:0 auto;animation:rise .3s ease-out}
+.ios-install img{width:52px;height:52px;border-radius:12px}
+.ios-install b{display:block;font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.03em;text-transform:uppercase;line-height:1.1}
+.ios-install p{margin:3px 0 0;font-size:14px;line-height:1.4}
+.ios-install .share{display:inline-block;vertical-align:-3px;width:16px;height:18px}
+.ios-install .x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer;border-radius:8px}
+.ios-install .copy{margin-top:8px;font:700 13px var(--f-body);padding:7px 12px;border-radius:8px;border:1.5px solid var(--route);background:transparent;color:var(--route);cursor:pointer}
+.ios-install::after{content:"";position:absolute;left:50%;bottom:-11px;width:18px;height:18px;background:var(--panel);border-right:2px solid var(--route);border-bottom:2px solid var(--route);transform:translateX(-50%) rotate(45deg)}
+.ios-install.inapp::after{display:none}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;z-index:20}
 @media (prefers-reduced-motion:reduce){.pulse{animation:none;opacity:0}.sheet{animation:none}}
 /* ---- Voetbal-aankleding: grasmat, krijtlijnen, stadionbord ---- */
@@ -242,6 +253,11 @@ h1 span{color:var(--amber)}
     <h2>Reisverslag <span id="km"></span></h2>
     <ol id="log"></ol>
   </section>
+</div>
+<div class="ios-install" id="iosInstall" hidden role="dialog" aria-label="Zet Transferroute op je beginscherm">
+  <img src="apple-touch-icon.png?v=6" alt="">
+  <div><b>Elke dag spelen?</b><p id="iosText"></p><button class="copy" id="iosCopy" type="button" hidden>Kopieer link</button></div>
+  <button class="x" id="iosClose" type="button" aria-label="Sluiten">×</button>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -446,6 +462,7 @@ function act(name){
   if (state.done) recordStats();
   save(); render(false);
   if (state.done) $("result").scrollIntoView({behavior:"smooth",block:"start"});
+  if (state.done) setTimeout(installHint,4000);
 }
 $("form").addEventListener("submit",ev=>{ev.preventDefault();
   const raw=$("guess").value.trim(); if(!raw||state.done) return;
@@ -495,6 +512,30 @@ let tt; function tick(){clearTimeout(tt); const el=$("next"); if(!el) return;
   if(todayIndex()!==day){loadDaily();return}
   el.textContent=`Volgende route over ${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor(s%3600/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
   tt=setTimeout(tick,1000);}
+
+// ---- iPhone: uitleg om de app op het beginscherm te zetten ----
+const SHARE_ICON='<svg class="share" viewBox="0 0 16 18" aria-hidden="true"><path d="M8 1v10M4.5 4.5L8 1l3.5 3.5M3 7.5H1.5v9h13v-9H13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function installHint(){
+  const ua=navigator.userAgent;
+  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const installed=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
+  if(!ios||installed||store.get("tr-install-dismissed",false)) return;
+  if(!$("rules").hidden||!$("proud").hidden){ setTimeout(installHint,2500); return; }
+  const inApp=/FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|Twitter|LinkedInApp|CriOS|FxiOS|EdgiOS|GSA\//.test(ua);
+  const box=$("iosInstall");
+  if(inApp){
+    box.classList.add("inapp");
+    $("iosText").innerHTML="Open deze pagina in <b style='display:inline;font:inherit;text-transform:none;letter-spacing:0'>Safari</b> om Transferroute als app op je beginscherm te zetten.";
+    $("iosCopy").hidden=false;
+  } else {
+    $("iosText").innerHTML="Tik onderin op "+SHARE_ICON+" <strong>Deel</strong> (soms eerst op <strong>•••</strong>) en kies <strong>Zet op beginscherm</strong>.";
+  }
+  box.hidden=false;
+}
+$("iosClose").onclick=()=>{ $("iosInstall").hidden=true; store.set("tr-install-dismissed",true); };
+$("iosCopy").onclick=async()=>{ const u=location.href.split("#")[0];
+  try{ await navigator.clipboard.writeText(u); toast("Link gekopieerd, plak hem in Safari"); }
+  catch(e){ toast(u); } };
 function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function openRules(){$("rules").hidden=false;$("rulesClose").focus()}
 function closeRules(){$("rules").hidden=true;store.set("tr-seen-rules",true);$("helpBtn").focus()}
@@ -507,6 +548,7 @@ $("proud").addEventListener("click",e=>{if(e.target.id==="proud")$("proud").hidd
 
 setVB([FX,FY,FW,FW*0.75]);
 loadDaily();
+if (state.done) setTimeout(installHint,1500);
 </script>
 
 
