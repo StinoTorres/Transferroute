@@ -1,11 +1,11 @@
 // Transferroute service worker: de app opent ook zonder internet.
 // De pagina zelf wordt altijd eerst online opgehaald, zodat nieuwe spelers en
 // aanpassingen meteen binnenkomen; alleen als dat niet lukt, gebruikt hij de opgeslagen kopie.
-const CACHE = "transferroute-v5";
+const CACHE = "transferroute-v6";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
