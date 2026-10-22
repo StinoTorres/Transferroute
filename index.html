@@ -359,10 +359,10 @@ const dayDate = d => new Date(START + d*864e5).toLocaleDateString("nl-NL",{day:"
 function loadDaily(){
   day=todayIndex();
   puzzle = PLAYERS[ORDER[((day%PLAYERS.length)+PLAYERS.length)%PLAYERS.length]];
-  state = store.get("tr5-day-"+day, {step:1, log:[], done:false, won:false});
+  state = store.get("tr6-day-"+day, {step:1, log:[], done:false, won:false});
   render(true);
 }
-const save = () => store.set("tr5-day-"+day, state);
+const save = () => store.set("tr6-day-"+day, state);
 const shownStops = () => state.done ? puzzle.stops.length : Math.min(state.step, puzzle.stops.length);
 
 function render(jump){
