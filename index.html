@@ -419,7 +419,7 @@ function renderResult(){
   if(!practice){const t=getStats(); stats=`<div class="stats"><div><b>${t.played}</b><span>Gespeeld</span></div><div><b>${t.played?Math.round(t.won/t.played*100):0}%</b><span>Herkend</span></div><div><b>${t.streak}</b><span>Reeks</span></div><div><b>${t.max}</b><span>Record</span></div></div>`}
   el.innerHTML = `<h3>${head}</h3><p>Het was <b>${puzzle.n}</b>. <a href="https://www.transfermarkt.nl/x/profil/spieler/${puzzle.tm}" target="_blank" rel="noopener">Bekijk op Transfermarkt</a></p>${stats}
     <div class="actions">${practice?"":'<button class="btn" id="shareBtn" type="button">Deel resultaat</button>'}${practice?'<button class="btn ghost" id="backBtn" type="button">Route van vandaag</button>':""}</div>
-    <p class="playlink">Speel mee: <a href="https://stinotorres.github.io/transferroute/" target="_blank" rel="noopener">stinotorres.github.io/transferroute</a></p><textarea class="sharetext" id="shareText" rows="3" readonly hidden></textarea>${practice?"":'<div class="next" id="next"></div>'}`;
+    <p class="playlink">Speel mee: <a href="https://stinotorres.github.io/Transferroute/" target="_blank" rel="noopener">stinotorres.github.io/Transferroute</a></p><textarea class="sharetext" id="shareText" rows="3" readonly hidden></textarea>${practice?"":'<div class="next" id="next"></div>'}`;
   if(!practice){$("shareBtn").onclick=share; tick();}
    if(practice) $("backBtn").onclick=loadDaily;
 }
@@ -477,7 +477,7 @@ function shareText(){
   const marks = state.log.map(l=>l.gaveUp?"🏳️":l.ok?"🟩":l.name?"🟥":"✈️").join("");
   const s=state.step, n=puzzle.stops.length;
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
-  return `Transferroute (${LVL[puzzle.lvl].toLowerCase()}) ${res}${state.hint?" 💡":""}\n${marks}\nhttps://stinotorres.github.io/transferroute/`;
+  return `Transferroute (${LVL[puzzle.lvl].toLowerCase()}) ${res}${state.hint?" 💡":""}\n${marks}\nhttps://stinotorres.github.io/Transferroute/`;
 }
 async function share(){const t=shareText();
   try{await navigator.clipboard.writeText(t);toast("Gekopieerd, plak het in je groepsapp")}
