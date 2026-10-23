@@ -5,8 +5,6 @@
 -- Beveiliging: de tabellen zijn NIET direct leesbaar of schrijfbaar met de publieke (anon) sleutel.
 -- Alles loopt via de functies hieronder, die zelf controleren wie je bent (via een geheime code op je telefoon).
 
-create extension if not exists pgcrypto;
-
 -- ---------- Tabellen ----------
 create table if not exists public.pools (
   id          uuid primary key default gen_random_uuid(),
@@ -90,8 +88,10 @@ language plpgsql security definer set search_path = public as $$
 declare v_code text; v_pool uuid;
 begin
   loop
-    v_code := upper(substr(translate(encode(gen_random_bytes(8), 'base64'), '+/=OI01l', ''), 1, 6));
-    exit when char_length(v_code) = 6 and not exists (select 1 from pools p where p.code = v_code);
+    -- 6 tekens zonder verwarrende letters/cijfers (geen O/0, I/1)
+    select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 1 + floor(random() * 32)::int, 1), '')
+      into v_code from generate_series(1, 6);
+    exit when not exists (select 1 from pools p where p.code = v_code);
   end loop;
   insert into pools(code, name) values (v_code, trim(p_name)) returning id into v_pool;
   return query

@@ -653,7 +653,7 @@ $("proudClose").onclick=()=>{$("proud").hidden=true};
 $("proud").addEventListener("click",e=>{if(e.target.id==="proud")$("proud").hidden=true});
 
 // ---- Poules: samen spelen met vrienden (Supabase) ----
-const SB_URL = "", SB_KEY = "";      // Project URL en publieke (anon/publishable) sleutel
+const SB_URL = "https://lqsltyccaavymdivkoex.supabase.co", SB_KEY = "sb_publishable_3X1u-2mSQ28F9EDaYWSj1Q_Oq2akrPb";      // Project URL en publieke (anon/publishable) sleutel
 const POOL_ON = !!(SB_URL && SB_KEY);
 const SITE = "https://stinotorres.github.io/Transferroute/";
 const esc = t => String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
