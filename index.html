@@ -180,6 +180,37 @@ h1 span{color:var(--amber)}
 .result .btn.ghost{color:#fff;border-color:var(--board-line)}
 .playlink{font-size:13px;color:var(--board-muted)}
 .sharetext{background:#000;color:#fff;border-color:var(--board-line)}
+/* ---- poules ---- */
+.sheet.pool{position:relative}
+.pool-x{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.sheet.pool h2{padding-right:40px}
+.sheet.pool p{margin:0}
+.pool-sub{font:600 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--route)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.seg button{font:700 14px var(--f-body);padding:9px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.pool form{display:flex;flex-direction:column;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px;font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.field input{font:600 16px var(--f-body);letter-spacing:0;text-transform:none;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+.field input.code{text-transform:uppercase;letter-spacing:.2em;font-family:var(--f-mono)}
+.perr{color:var(--bad);font-size:13px;min-height:1.2em}
+.psmall{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{font:600 12.5px var(--f-body);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--route);color:var(--fg);background:color-mix(in srgb,var(--route) 14%,transparent)}
+.board{width:100%;border-collapse:collapse;font-size:15px}
+.board th{font:600 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 6px 6px}
+.board td{padding:10px 6px;border-top:1px solid var(--line);vertical-align:middle}
+.board .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.board .rk{width:18px;font:600 13px var(--f-mono);color:var(--route)}
+.board .nm{font-weight:700;overflow-wrap:anywhere}
+.board .nm small{font-weight:500;color:var(--muted)}
+.board .td{white-space:nowrap;font-size:14px}
+.board .td.wait{color:var(--muted)}
+.board tr.me td{background:color-mix(in srgb,var(--route) 12%,transparent)}
+.board .pts{font:800 18px var(--f-display)}
+.pool-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.notice{border:1px dashed var(--route);border-radius:10px;padding:10px 12px;font-size:14px}
 </style>
 
 <div class="wrap">
@@ -189,6 +220,7 @@ h1 span{color:var(--amber)}
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="meta" id="meta"></div>
+      <button class="icon-btn" id="poolBtn" aria-label="Poule met vrienden" hidden>🏆</button>
       <button class="icon-btn" id="helpBtn" aria-label="Spelregels">?</button>
     </div>
   </header>
@@ -231,6 +263,13 @@ h1 span{color:var(--amber)}
     <p id="ydayText"></p>
     <a class="credit" id="ydayCredit" target="_blank" rel="noopener" hidden>Foto: Wikimedia Commons</a>
     <button class="btn" type="button" id="ydayClose">Speel vandaag</button>
+   </div>
+  </div>
+
+  <div class="modal" id="pool" hidden role="dialog" aria-modal="true" aria-labelledby="poolTitle">
+   <div class="sheet pool">
+    <button class="pool-x" id="poolX" type="button" aria-label="Sluiten">×</button>
+    <div id="poolBody"></div>
    </div>
   </div>
 
@@ -465,9 +504,9 @@ function renderResult(){
   const head = state.gaveUp ? "Kleine speler bij stop "+Math.min(s,nStops) : !state.won ? "Reis zonder herkenning" : s===1 ? "Op het eerste vliegveld al herkend" : s<=nStops ? `Herkend bij stop ${s} van ${nStops}` : "Op het nippertje herkend";
   const t=getStats(), stats=`<div class="stats"><div><b>${t.played}</b><span>Gespeeld</span></div><div><b>${t.played?Math.round(t.won/t.played*100):0}%</b><span>Herkend</span></div><div><b>${t.streak}</b><span>Reeks</span></div><div><b>${t.max}</b><span>Record</span></div></div>`;
   el.innerHTML = `<h3>${head}</h3><p>Het was <b>${puzzle.n}</b>.</p>${stats}
-    <div class="actions"><button class="btn" id="shareBtn" type="button">Deel resultaat</button></div>
+    <div class="actions"><button class="btn" id="shareBtn" type="button">Deel resultaat</button>${POOL_ON?'<button class="btn ghost" id="poolOpen" type="button">🏆 Poule</button>':""}</div>
     <p class="playlink">Speel mee: <a href="https://stinotorres.github.io/Transferroute/" target="_blank" rel="noopener">stinotorres.github.io/Transferroute</a></p><textarea class="sharetext" id="shareText" rows="3" readonly hidden></textarea><div class="next" id="next"></div>`;
-  $("shareBtn").onclick=share; tick();
+  $("shareBtn").onclick=share; if($("poolOpen")) $("poolOpen").onclick=openPool; tick();
 }
 function getStats(){return store.get("tr2-stats",{played:0,won:0,streak:0,max:0,last:null,lastWon:null})}
 function recordStats(){ const s=getStats(); if(s.last===day) return;
@@ -481,7 +520,7 @@ function act(name){
   else if (name===null){state.done=true;state.won=false;state.gaveUp=true;e.gaveUp=true}
   else if (state.step>=total()){state.done=true;state.won=false}
   else { state.step++; flyNext = state.step <= puzzle.stops.length; }
-  if (state.done) recordStats();
+  if (state.done){ recordStats(); poolSubmit(); }
   save(); render(false);
   if (state.done) $("result").scrollIntoView({behavior:"smooth",block:"start"});
   if (state.done) setTimeout(installHint,4000);
@@ -553,7 +592,7 @@ function installHint(){
   const android=/Android/.test(ua);
   const installed=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
   if((!ios&&!android)||installed||store.get("tr-install-dismissed",false)) return;
-  if(!$("rules").hidden||!$("proud").hidden||!$("yday").hidden){ setTimeout(installHint,2500); return; }
+  if(!$("rules").hidden||!$("proud").hidden||!$("yday").hidden||!$("pool").hidden){ setTimeout(installHint,2500); return; }
   const box=$("iosInstall"), txt=$("iosText"), B=s=>"<strong>"+s+"</strong>";
   box.classList.remove("inapp","android"); $("iosCopy").hidden=true; $("installBtn").hidden=true;
   if(ios){
@@ -613,10 +652,189 @@ if(!store.get("tr-seen-rules",false)) openRules();
 $("proudClose").onclick=()=>{$("proud").hidden=true};
 $("proud").addEventListener("click",e=>{if(e.target.id==="proud")$("proud").hidden=true});
 
+// ---- Poules: samen spelen met vrienden (Supabase) ----
+const SB_URL = "", SB_KEY = "";      // Project URL en publieke (anon/publishable) sleutel
+const POOL_ON = !!(SB_URL && SB_KEY);
+const SITE = "https://stinotorres.github.io/Transferroute/";
+const esc = t => String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const myPools = () => store.get("tr-pools", []);
+const setPools = p => store.set("tr-pools", p);
+let poolView = null, poolInvite = null, submitting = null;
+
+async function rpc(fn, args){
+  const h = {"apikey":SB_KEY, "Content-Type":"application/json"};
+  if (SB_KEY.startsWith("eyJ")) h.Authorization = "Bearer "+SB_KEY;
+  let r;
+  try { r = await fetch(SB_URL.replace(/\/$/,"")+"/rest/v1/rpc/"+fn, {method:"POST", headers:h, body:JSON.stringify(args)}); }
+  catch(e){ throw new Error("Geen verbinding. Probeer het zo nog eens."); }
+  const t = await r.text(); let j = null; try { j = t ? JSON.parse(t) : null } catch(e){}
+  if (!r.ok){
+    const err = new Error(j && j.code==="P0001" && j.message ? j.message : "Er ging iets mis. Probeer het zo nog eens.");
+    err.gone = !!(j && j.message==="Onbekende speler"); throw err;
+  }
+  return j;
+}
+function myResult(){
+  if (!state || !state.done) return null;
+  return {p_day:day, p_outcome: state.won?"won":state.gaveUp?"gaveup":"missed", p_stop: state.won?state.step:null,
+          p_guesses: state.log.filter(l=>!l.gaveUp).length, p_hint: !!state.hint};
+}
+// Stuur de uitslag van vandaag naar al je poules (één keer per poule per dag).
+function poolSubmit(){
+  if (!POOL_ON) return Promise.resolve();
+  return submitting = (submitting||Promise.resolve()).then(async ()=>{
+    const r = myResult(); if (!r) return;
+    const sent = store.get("tr-pool-sent", {});
+    for (const k of Object.keys(sent)) if (+k.split(":")[1] < day-3) delete sent[k];
+    for (const p of myPools()){
+      const k = p.member+":"+day; if (sent[k]) continue;
+      try { await rpc("submit_result", {p_member:p.member, p_secret:p.secret, ...r}); sent[k]=1; }
+      catch(e){ if (e.gone) dropPool(p.member); }
+    }
+    store.set("tr-pool-sent", sent);
+  });
+}
+function dropPool(member){ setPools(myPools().filter(p=>p.member!==member)); }
+
+function openPool(){
+  if (!POOL_ON) return;
+  if (poolInvite && !myPools().some(p=>p.code===poolInvite)) poolStart("join");
+  else { if (poolInvite) poolView = poolInvite; poolInvite = null; poolBoard(); }
+  $("pool").hidden = false;
+}
+function closePool(){ $("pool").hidden = true; poolInvite = null; }
+
+function poolStart(mode){
+  const code = poolInvite || "", nick = esc(store.get("tr-nick",""));
+  const has = myPools().length > 0;
+  $("poolBody").innerHTML = `
+    <h2 id="poolTitle">${code ? "Je bent uitgenodigd" : "Speel met vrienden"}</h2>
+    <p>${code ? "Doe mee met de poule en vergelijk elke dag wie de route het snelst herkent." : "Maak een poule en deel de link in je groepsapp. Iedereen speelt dezelfde route; in het klassement zie je wie hem het snelst herkende."}</p>
+    <div class="seg" role="group" aria-label="Nieuwe poule of meedoen">
+      <button type="button" id="segNew" aria-pressed="${mode!=="join"}">Nieuwe poule</button>
+      <button type="button" id="segJoin" aria-pressed="${mode==="join"}">Ik heb een code</button>
+    </div>
+    <form id="poolForm" novalidate>
+      ${mode==="join"
+        ? `<label class="field">Code<input class="code" id="pCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(code)}" placeholder="ABC123"></label>`
+        : `<label class="field">Naam van de poule<input id="pName" maxlength="40" autocomplete="off" placeholder="Bijv. De Kleine Spelers"></label>`}
+      <label class="field">Jouw bijnaam<input id="pNick" maxlength="20" autocomplete="nickname" value="${nick}" placeholder="Zo zien anderen je"></label>
+      <div class="perr" id="pErr" role="alert"></div>
+      <button class="btn" type="submit" id="pGo">${mode==="join" ? "Doe mee" : "Maak poule"}</button>
+    </form>
+    <p class="psmall">We bewaren alleen je bijnaam en je uitslag per dag. Geen naam, e-mail of account nodig.</p>
+    ${has ? `<button class="mini" type="button" id="pBack">← Terug naar klassement</button>` : ""}`;
+  $("segNew").onclick = () => poolStart("new");
+  $("segJoin").onclick = () => poolStart("join");
+  if ($("pBack")) $("pBack").onclick = () => { poolInvite = null; poolBoard(); };
+  $("poolForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const nickV = $("pNick").value.trim(), err = $("pErr");
+    const codeV = mode==="join" ? $("pCode").value.trim().toUpperCase() : "";
+    if (mode==="join" && codeV.length!==6){ err.textContent="Een code heeft 6 tekens."; return; }
+    if (mode!=="join" && !$("pName").value.trim()){ err.textContent="Geef de poule een naam."; return; }
+    if (!nickV){ err.textContent="Kies een bijnaam."; return; }
+    $("pGo").disabled = true; err.textContent = "";
+    try {
+      let entry;
+      if (mode==="join"){
+        const [r] = await rpc("join_pool", {p_code:codeV, p_nickname:nickV});
+        entry = {member:r.member_id, secret:r.secret, code:codeV, name:r.pool_name, nick:nickV};
+      } else {
+        const name = $("pName").value.trim();
+        const [r] = await rpc("create_pool", {p_name:name, p_nickname:nickV});
+        entry = {member:r.member_id, secret:r.secret, code:r.code, name, nick:nickV};
+      }
+      store.set("tr-nick", nickV);
+      setPools([...myPools().filter(p=>p.code!==entry.code), entry]);
+      poolView = entry.code; poolInvite = null;
+      poolBoard();
+    } catch(e){ err.textContent = e.message; $("pGo").disabled = false; }
+  };
+  setTimeout(()=>{ const f = mode==="join" ? (code ? $("pNick") : $("pCode")) : $("pName"); f && f.focus(); }, 50);
+}
+
+function chipsHtml(ps, cur){
+  return `<div class="chips">${ps.map(x=>`<button type="button" data-c="${esc(x.code)}" aria-pressed="${x.code===cur}">${esc(x.name)}</button>`).join("")}<button type="button" id="pAdd">＋ Poule</button></div>`;
+}
+function bindChips(){
+  document.querySelectorAll("#poolBody .chips button[data-c]").forEach(b=>b.onclick=()=>{ poolView=b.dataset.c; poolBoard(); });
+  const a = $("pAdd"); if (a) a.onclick = () => poolStart("new");
+}
+async function poolBoard(){
+  const ps = myPools(); if (!ps.length) return poolStart("new");
+  const p = ps.find(x=>x.code===poolView) || ps[ps.length-1]; poolView = p.code;
+  $("poolBody").innerHTML = `<h2 id="poolTitle">${esc(p.name)}</h2>${chipsHtml(ps,p.code)}<p class="psmall" id="pLoad">Klassement laden…</p>`;
+  bindChips();
+  let rows;
+  try { await poolSubmit(); rows = await rpc("pool_board", {p_member:p.member, p_secret:p.secret, p_day:day}); }
+  catch(e){
+    if (e.gone){ dropPool(p.member); toast("Je zit niet meer in deze poule"); return poolBoard(); }
+    if ($("pLoad")) $("pLoad").textContent = e.message; return;
+  }
+  if (poolView !== p.code) return;   // intussen een andere poule gekozen
+  const me = rows.find(r=>r.is_me), iPlayed = !!(me && me.played);
+  let rank = 0, prev = null;
+  const body = rows.map((r,i)=>{
+    if (r.week_points!==prev){ rank = i+1; prev = r.week_points; }
+    let today;
+    if (!r.played) today = `<span class="td wait">nog niet</span>`;
+    else if (!r.outcome) today = `<span class="td" title="Speel eerst zelf">🔒 gespeeld</span>`;
+    else if (r.outcome==="won") today = `<span class="td">🟩 stop ${r.stop}${r.hint?" 💡":""}</span>`;
+    else if (r.outcome==="gaveup") today = `<span class="td">🏳️ opgegeven</span>`;
+    else today = `<span class="td">❌ niet herkend</span>`;
+    return `<tr class="${r.is_me?"me":""}"><td class="rk">${rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r.week_points}</td></tr>`;
+  }).join("");
+  $("poolBody").innerHTML = `
+    <h2 id="poolTitle">${esc(p.name)}</h2>
+    ${chipsHtml(ps,p.code)}
+    ${rows.length<2 ? `<div class="notice">Je bent nog de enige. Deel de link in je groepsapp, dan verschijnen je vrienden hier.</div>` : ""}
+    ${!iPlayed ? `<div class="notice">Speel eerst de route van vandaag. Daarna zie je hoe de rest het deed.</div>` : ""}
+    <p class="pool-sub">Weekstand · vandaag ${dayDate(day)}</p>
+    <table class="board"><thead><tr><th></th><th>Speler</th><th>Vandaag</th><th class="num">Reeks</th><th class="num">Ptn</th></tr></thead><tbody>${body}</tbody></table>
+    <p class="psmall">Punten: herkend bij stop 1 = 5, stop 2 = 4, stop 3 = 3, stop 4 = 2, later = 1. Elke maandag begint een nieuwe week.</p>
+    <button class="btn" type="button" id="pInvite">Nodig vrienden uit</button>
+    <div class="pool-foot"><span class="psmall">Code <b>${esc(p.code)}</b> · jij bent ${esc(p.nick)}</span><button class="mini" type="button" id="pLeave">Verlaat poule</button></div>
+    <p class="psmall">We bewaren alleen je bijnaam en je uitslag per dag. Verlaat je de poule, dan wissen we die.</p>`;
+  bindChips();
+  $("pInvite").onclick = () => invite(p);
+  $("pLeave").onclick = async () => {
+    const b = $("pLeave");
+    if (!b.classList.contains("confirm")){ b.classList.add("confirm"); b.textContent = "Zeker? Klik nog een keer"; return; }
+    b.disabled = true;
+    try { await rpc("leave_pool", {p_member:p.member, p_secret:p.secret}); }
+    catch(e){ if (!e.gone){ toast(e.message); b.disabled=false; return; } }
+    dropPool(p.member); poolView = null; toast("Je hebt de poule verlaten");
+    myPools().length ? poolBoard() : poolStart("new");
+  };
+}
+async function invite(p){
+  const url = SITE+"?poule="+p.code;
+  const text = `Doe mee met mijn Transferroute-poule "${p.name}"! Elke dag een nieuwe voetbalroute raden. Code: ${p.code}`;
+  if (navigator.share){ try { await navigator.share({title:"Transferroute", text, url}); return; } catch(e){ if (e.name==="AbortError") return; } }
+  try { await navigator.clipboard.writeText(text+"\n"+url); toast("Uitnodiging gekopieerd, plak hem in je groepsapp"); }
+  catch(e){ toast(url); }
+}
+// Uitnodigingslink ?poule=CODE: open het meedoen-scherm zodra de uitleg en 'gisteren' dicht zijn.
+function checkInvite(){
+  const m = /[?&]poule=([A-Za-z0-9]{6})/.exec(location.search); if (!m) return;
+  poolInvite = m[1].toUpperCase();
+  try { history.replaceState(null, "", location.pathname + location.hash); } catch(e){}
+  (function wait(){ if (!$("rules").hidden || !$("yday").hidden || !$("proud").hidden) return setTimeout(wait, 400); openPool(); })();
+}
+if (POOL_ON){
+  $("poolBtn").hidden = false;
+  $("poolBtn").onclick = openPool;
+  $("poolX").onclick = closePool;
+  $("pool").addEventListener("click", e=>{ if (e.target.id==="pool") closePool(); });
+  document.addEventListener("keydown", e=>{ if (e.key==="Escape" && !$("pool").hidden) closePool(); });
+}
+
 setVB([FX,FY,FW,FW*0.75]);
 loadDaily();
 if ($("rules").hidden) showYesterday();
 if (state.done) setTimeout(installHint,1500);
+if (POOL_ON){ checkInvite(); poolSubmit(); }
 </script>
 
 
