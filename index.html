@@ -501,7 +501,8 @@ $("suggest").addEventListener("pointerdown",e=>{const li=e.target.closest("li");
 document.addEventListener("click",e=>{if(!e.target.closest(".row"))$("suggest").hidden=true});
 
 function shareText(){
-  const marks = state.log.map(l=>l.gaveUp?"🏳️":l.ok?"🟩":l.name?"🟥":"✈️").join("");
+  // Niet herkend: één rood kruis, zodat de rij niet verraadt hoeveel clubs de speler had.
+  const marks = (!state.won && !state.gaveUp) ? "❌" : state.log.map(l=>l.gaveUp?"🏳️":l.ok?"🟩":l.name?"🟥":"✈️").join("");
   const s=state.step, n=puzzle.stops.length;
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
   return `Transferroute ${dayDate(day)} (${LVL[puzzle.lvl].toLowerCase()}) ${res}${state.hint?" 💡":""}\n${marks}\nhttps://stinotorres.github.io/Transferroute/`;
