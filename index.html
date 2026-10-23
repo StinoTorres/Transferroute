@@ -507,7 +507,7 @@ function shareText(){
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
   const missed = !state.won && !state.gaveUp;
   const end = missed ? "❌ niet herkend" : state.gaveUp ? "❌🏳️ kleine speler 🤏" : null;
-  const head = `Transferroute ${dayDate(day)} (${LVL[puzzle.lvl].toLowerCase()})` + (end ? "" : ` ${res}`) + (state.hint?" 💡":"");
+  const head = `⚽️ ${dayDate(day)} ⚽️\nTransferroute (${LVL[puzzle.lvl].toLowerCase()})` + (end ? "" : ` ${res}`) + (state.hint?" 💡":"");
   const st = getStats().streak || 0;
   const streak = st > 0 ? `🔥 Reeks: ${st} ${st===1?"dag":"dagen"}` : "💔 Reeks: 0";
   return `${head}\n${end || marks}\n${streak}\nhttps://stinotorres.github.io/Transferroute/`;
