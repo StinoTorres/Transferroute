@@ -657,6 +657,8 @@ $("proud").addEventListener("click",e=>{if(e.target.id==="proud")$("proud").hidd
 // ---- Poules: samen spelen met vrienden (Supabase) ----
 const SB_URL = "https://lqsltyccaavymdivkoex.supabase.co", SB_KEY = "sb_publishable_3X1u-2mSQ28F9EDaYWSj1Q_Oq2akrPb";      // Project URL en publieke (anon/publishable) sleutel
 const POOL_ON = !!(SB_URL && SB_KEY);
+// Poules werken alleen op de echte site (en lokaal bij testen); een ingesloten kopie mag Supabase niet bereiken.
+const POOL_HERE = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
 const SITE = "https://stinotorres.github.io/Transferroute/";
 const esc = t => String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const myPools = () => store.get("tr-pools", []);
@@ -683,7 +685,7 @@ function myResult(){
 }
 // Stuur de uitslag van vandaag naar al je poules (één keer per poule per dag).
 function poolSubmit(){
-  if (!POOL_ON) return Promise.resolve();
+  if (!POOL_ON || !POOL_HERE) return Promise.resolve();
   return submitting = (submitting||Promise.resolve()).then(async ()=>{
     const r = myResult(); if (!r) return;
     const sent = store.get("tr-pool-sent", {});
@@ -700,6 +702,12 @@ function dropPool(member){ setPools(myPools().filter(p=>p.member!==member)); }
 
 function openPool(){
   if (!POOL_ON) return;
+  if (!POOL_HERE){
+    $("poolBody").innerHTML = `<h2 id="poolTitle">Speel met vrienden</h2>
+      <p>Poules en het klassement werken alleen in de echte Transferroute. Open hem daar, maak een poule en deel de link in je groepsapp.</p>
+      <a class="btn" href="${SITE}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Open Transferroute</a>`;
+    $("pool").hidden = false; return;
+  }
   if (poolInvite && !myPools().some(p=>p.code===poolInvite)) poolStart("join");
   else { if (poolInvite) poolView = poolInvite; poolInvite = null; poolBoard(); }
   $("pool").hidden = false;
