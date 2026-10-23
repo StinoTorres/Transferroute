@@ -507,10 +507,11 @@ function shareText(){
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
   const missed = !state.won && !state.gaveUp;
   const end = missed ? "❌ niet herkend" : state.gaveUp ? "❌🏳️ kleine speler 🤏" : null;
-  const head = `⚽️ ${dayDate(day)} ⚽️\nTransferroute (${LVL[puzzle.lvl].toLowerCase()})` + (end ? "" : ` ${res}`) + (state.hint?" 💡":"");
+  const head = `⚽️ ${dayDate(day)} ⚽️\nTransferroute` + (state.hint?" 💡":"");
+  const squares = state.log.filter(l=>!l.gaveUp).length;
   const st = getStats().streak || 0;
   const streak = st > 0 ? `🔥 Reeks: ${st} ${st===1?"dag":"dagen"}` : "💔 Reeks: 0";
-  return `${head}\n${end || marks}\n${streak}\nhttps://stinotorres.github.io/Transferroute/`;
+  return `${head}\n${end || (marks + " = " + squares)}\n${streak}\nhttps://stinotorres.github.io/Transferroute/`;
 }
 async function share(){const t=shareText();
   try{await navigator.clipboard.writeText(t);toast("Gekopieerd, plak het in je groepsapp")}
