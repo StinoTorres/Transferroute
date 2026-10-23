@@ -61,6 +61,8 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
 .dum{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:.18em;color:var(--fg)}
 .proud-ball{font-size:44px;line-height:1}
 .photo{width:160px;height:160px;object-fit:cover;object-position:50% 20%;border-radius:50%;border:4px solid var(--route);background:var(--bg)}
+.yday .eyebrow{font:600 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--route)}
+.yday-route{font:500 12.5px var(--f-mono);color:var(--muted);line-height:1.5;margin:0}
 .credit{font-size:11px;color:var(--muted)}
 @keyframes pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}
 .zoombtn{position:absolute;right:8px;bottom:8px;font:600 12px var(--f-body);border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:5px 11px;cursor:pointer}
@@ -218,6 +220,19 @@ h1 span{color:var(--amber)}
     <p id="proudText">Jij bent een echte magistralis.</p>
     <a class="credit" id="proudCredit" target="_blank" rel="noopener" hidden>Foto: Wikimedia Commons</a>
     <button class="btn" type="button" id="proudClose">Dank je</button>
+   </div>
+  </div>
+
+  <div class="modal" id="yday" hidden role="dialog" aria-modal="true" aria-labelledby="ydayTitle">
+   <div class="sheet proud yday">
+    <div class="eyebrow" id="ydayDate"></div>
+    <h2 id="ydayTitle">Wie was het gisteren?</h2>
+    <img class="photo" id="ydayImg" alt="" hidden>
+    <div class="proud-ball" id="ydayBall" aria-hidden="true">⚽</div>
+    <p id="ydayText"></p>
+    <p class="yday-route" id="ydayRoute"></p>
+    <a class="credit" id="ydayCredit" target="_blank" rel="noopener" hidden>Foto: Wikimedia Commons</a>
+    <button class="btn" type="button" id="ydayClose">Speel vandaag</button>
    </div>
   </div>
 
@@ -540,7 +555,7 @@ function installHint(){
   const android=/Android/.test(ua);
   const installed=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
   if((!ios&&!android)||installed||store.get("tr-install-dismissed",false)) return;
-  if(!$("rules").hidden||!$("proud").hidden){ setTimeout(installHint,2500); return; }
+  if(!$("rules").hidden||!$("proud").hidden||!$("yday").hidden){ setTimeout(installHint,2500); return; }
   const box=$("iosInstall"), txt=$("iosText"), B=s=>"<strong>"+s+"</strong>";
   box.classList.remove("inapp","android"); $("iosCopy").hidden=true; $("installBtn").hidden=true;
   if(ios){
@@ -569,8 +584,32 @@ $("iosCopy").onclick=async()=>{ const u=location.href.split("#")[0];
   try{ await navigator.clipboard.writeText(u); toast("Link gekopieerd, plak hem in Safari"); }
   catch(e){ toast(u); } };
 function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
+
+// ---- Wie was het gisteren? (na de uitleg, één keer per dag, alleen als je hem gisteren niet hebt geraden) ----
+function showYesterday(){
+  const y=day-1; if(y<0||store.get("tr-yday-shown",null)===day) return;
+  const ys=store.get("tr6-day-"+y,null);
+  if(ys&&ys.won) return;
+  const p=PLAYERS[ORDER[((y%ORDER.length)+ORDER.length)%ORDER.length]];
+  store.set("tr-yday-shown",day);
+  $("ydayDate").textContent=dayDate(y);
+  const played=ys&&ys.done;
+  $("ydayText").innerHTML=(played ? (ys.gaveUp ? "Je gaf hem gisteren op. " : "Gisteren niet herkend? ") : "Gisteren niet gespeeld? ")+`Het was <b>${p.n}</b>.`;
+  const cities=[]; p.stops.forEach(s=>{ if(cities[cities.length-1]!==s.city) cities.push(s.city); });
+  $("ydayRoute").textContent=cities.join(" → ");
+  const img=$("ydayImg"), file=p.img;
+  img.hidden=!file; $("ydayBall").hidden=!!file; $("ydayCredit").hidden=!file;
+  img.onerror=()=>{ img.hidden=true; $("ydayBall").hidden=false; $("ydayCredit").hidden=true; };
+  if(file){ img.src="https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(file)+"?width=400"; img.alt="Foto van "+p.n;
+    $("ydayCredit").href="https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(file); }
+  $("yday").hidden=false; $("ydayClose").focus();
+}
+function closeYesterday(){ $("yday").hidden=true; }
+$("ydayClose").onclick=closeYesterday;
+$("yday").addEventListener("click",e=>{ if(e.target.id==="yday") closeYesterday(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("yday").hidden) closeYesterday(); });
 function openRules(){$("rules").hidden=false;$("rulesClose").focus()}
-function closeRules(){$("rules").hidden=true;store.set("tr-seen-rules",true);$("helpBtn").focus()}
+function closeRules(){$("rules").hidden=true;store.set("tr-seen-rules",true);$("helpBtn").focus(); if(day!==undefined) showYesterday();}
 $("helpBtn").onclick=openRules; $("rulesClose").onclick=closeRules;
 $("rules").addEventListener("click",e=>{if(e.target.id==="rules")closeRules()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("rules").hidden)closeRules()});
@@ -580,6 +619,7 @@ $("proud").addEventListener("click",e=>{if(e.target.id==="proud")$("proud").hidd
 
 setVB([FX,FY,FW,FW*0.75]);
 loadDaily();
+if ($("rules").hidden) showYesterday();
 if (state.done) setTimeout(installHint,1500);
 </script>
 
