@@ -444,7 +444,7 @@ function renderResult(){
   const s=state.step, nStops=puzzle.stops.length;
   const head = state.gaveUp ? "Kleine speler bij stop "+Math.min(s,nStops) : !state.won ? "Reis zonder herkenning" : s===1 ? "Op het eerste vliegveld al herkend" : s<=nStops ? `Herkend bij stop ${s} van ${nStops}` : "Op het nippertje herkend";
   const t=getStats(), stats=`<div class="stats"><div><b>${t.played}</b><span>Gespeeld</span></div><div><b>${t.played?Math.round(t.won/t.played*100):0}%</b><span>Herkend</span></div><div><b>${t.streak}</b><span>Reeks</span></div><div><b>${t.max}</b><span>Record</span></div></div>`;
-  el.innerHTML = `<h3>${head}</h3><p>Het was <b>${puzzle.n}</b>. <a href="https://www.transfermarkt.nl/x/profil/spieler/${puzzle.tm}" target="_blank" rel="noopener">Bekijk op Transfermarkt</a></p>${stats}
+  el.innerHTML = `<h3>${head}</h3><p>Het was <b>${puzzle.n}</b>.</p>${stats}
     <div class="actions"><button class="btn" id="shareBtn" type="button">Deel resultaat</button></div>
     <p class="playlink">Speel mee: <a href="https://stinotorres.github.io/Transferroute/" target="_blank" rel="noopener">stinotorres.github.io/Transferroute</a></p><textarea class="sharetext" id="shareText" rows="3" readonly hidden></textarea><div class="next" id="next"></div>`;
   $("shareBtn").onclick=share; tick();
