@@ -663,7 +663,7 @@ const SITE = "https://stinotorres.github.io/Transferroute/";
 const esc = t => String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const myPools = () => store.get("tr-pools", []);
 const setPools = p => store.set("tr-pools", p);
-let poolView = null, poolInvite = null, submitting = null;
+let poolView = null, poolInvite = null, submitting = null, poolTab = store.get("tr-pool-tab","week");
 
 async function rpc(fn, args){
   const h = {"apikey":SB_KEY, "Content-Type":"application/json"};
@@ -784,29 +784,37 @@ async function poolBoard(){
   }
   if (poolView !== p.code) return;   // intussen een andere poule gekozen
   const me = rows.find(r=>r.is_me), iPlayed = !!(me && me.played);
+  const key = poolTab==="total" ? "total_points" : "week_points";
+  rows.sort((a,b)=> b[key]-a[key] || b.streak-a.streak || a.nickname.localeCompare(b.nickname,"nl"));
   let rank = 0, prev = null;
   const body = rows.map((r,i)=>{
-    if (r.week_points!==prev){ rank = i+1; prev = r.week_points; }
+    if (r[key]!==prev){ rank = i+1; prev = r[key]; }
     let today;
     if (!r.played) today = `<span class="td wait">nog niet</span>`;
     else if (!r.outcome) today = `<span class="td" title="Speel eerst zelf">🔒 gespeeld</span>`;
     else if (r.outcome==="won") today = `<span class="td">🟩 stop ${r.stop}${r.hint?" 💡":""}</span>`;
     else if (r.outcome==="gaveup") today = `<span class="td">🏳️ opgegeven</span>`;
     else today = `<span class="td">❌ niet herkend</span>`;
-    return `<tr class="${r.is_me?"me":""}"><td class="rk">${rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r.week_points}</td></tr>`;
+    return `<tr class="${r.is_me?"me":""}"><td class="rk">${rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
   }).join("");
   $("poolBody").innerHTML = `
     <h2 id="poolTitle">${esc(p.name)}</h2>
     ${chipsHtml(ps,p.code)}
     ${rows.length<2 ? `<div class="notice">Je bent nog de enige. Deel de link in je groepsapp, dan verschijnen je vrienden hier.</div>` : ""}
     ${!iPlayed ? `<div class="notice">Speel eerst de route van vandaag. Daarna zie je hoe de rest het deed.</div>` : ""}
-    <p class="pool-sub">Weekstand · vandaag ${dayDate(day)}</p>
+    <div class="seg" role="group" aria-label="Klassement">
+      <button type="button" id="tabWeek" aria-pressed="${poolTab!=="total"}">Deze week</button>
+      <button type="button" id="tabTotal" aria-pressed="${poolTab==="total"}">Totaal</button>
+    </div>
+    <p class="pool-sub">${poolTab==="total" ? "Totaalstand · sinds de start van de poule" : "Weekstand · vandaag "+dayDate(day)}</p>
     <table class="board"><thead><tr><th></th><th>Speler</th><th>Vandaag</th><th class="num">Reeks</th><th class="num">Ptn</th></tr></thead><tbody>${body}</tbody></table>
-    <p class="psmall">Punten: herkend bij stop 1 = 5, stop 2 = 4, stop 3 = 3, stop 4 = 2, later = 1. Elke maandag begint een nieuwe week.</p>
+    <p class="psmall">Punten: je begint elke dag met 10. Elke stop verder kost 1 punt en de hint ook 1. Herkend levert altijd minstens 1 punt op; niet herkend of opgegeven is 0. De weekstand begint elke maandag opnieuw; het totaal telt door.</p>
     <button class="btn" type="button" id="pInvite">Nodig vrienden uit</button>
     <div class="pool-foot"><span class="psmall">Code <b>${esc(p.code)}</b> · jij bent ${esc(p.nick)}</span><button class="mini" type="button" id="pLeave">Verlaat poule</button></div>
     <p class="psmall">We bewaren alleen je bijnaam en je uitslag per dag. Verlaat je de poule, dan wissen we die.</p>`;
   bindChips();
+  $("tabWeek").onclick = () => { poolTab="week"; store.set("tr-pool-tab",poolTab); poolBoard(); };
+  $("tabTotal").onclick = () => { poolTab="total"; store.set("tr-pool-tab",poolTab); poolBoard(); };
   $("pInvite").onclick = () => invite(p);
   $("pLeave").onclick = async () => {
     const b = $("pLeave");

@@ -48,10 +48,14 @@ language sql stable as $$
   select ((now() at time zone 'Europe/Amsterdam')::date - date '2026-10-22')::int
 $$;
 
--- Punten voor de weekstand: geraden bij stop 1 = 5, stop 2 = 4, stop 3 = 3, stop 4 = 2, later = 1.
-create or replace function public.tr_points(p_outcome text, p_stop int) returns int
+-- Punten voor de weekstand: je begint met 10; elke stop verder kost 1, de hint kost 1.
+-- Herkend levert altijd minstens 1 punt op; niet herkend of opgegeven = 0.
+drop function if exists public.tr_points(text, int);
+create or replace function public.tr_points(p_outcome text, p_stop int, p_hint boolean) returns int
 language sql immutable as $$
-  select case when p_outcome = 'won' then greatest(1, 6 - coalesce(p_stop, 5)) else 0 end
+  select case when p_outcome = 'won'
+              then greatest(1, 11 - coalesce(p_stop, 10) - case when p_hint then 1 else 0 end)
+              else 0 end
 $$;
 
 -- Reeks: aantal aaneengesloten geraden dagen, eindigend vandaag of gisteren.
@@ -128,10 +132,11 @@ begin
   on conflict (member_id, day) do nothing;
 end $$;
 
--- Klassement van je poule. Uitslagen van anderen voor vandaag zie je pas als je zelf hebt gespeeld.
+-- Klassement van je poule (week en totaal). Uitslagen van anderen voor vandaag zie je pas als je zelf hebt gespeeld.
+drop function if exists public.pool_board(uuid, uuid, int);
 create or replace function public.pool_board(p_member uuid, p_secret uuid, p_day int)
 returns table (pool_name text, pool_code text, nickname text, is_me boolean, played boolean,
-               outcome text, stop int, guesses int, hint boolean, streak int, week_points int)
+               outcome text, stop int, guesses int, hint boolean, streak int, week_points int, total_points int)
 language plpgsql security definer set search_path = public as $$
 declare v_pool uuid; v_i_played boolean; v_week_start int;
 begin
@@ -147,8 +152,10 @@ begin
            case when v_i_played or m.id = p_member then r.guesses end,
            case when v_i_played or m.id = p_member then r.hint end,
            tr_streak(m.id),
-           coalesce((select sum(tr_points(w.outcome, w.stop))::int from results w
-                     where w.member_id = m.id and w.day between v_week_start and p_day), 0)
+           coalesce((select sum(tr_points(w.outcome, w.stop, w.hint))::int from results w
+                     where w.member_id = m.id and w.day between v_week_start and p_day), 0),
+           coalesce((select sum(tr_points(t.outcome, t.stop, t.hint))::int from results t
+                     where t.member_id = m.id and t.day <= p_day), 0)
     from members m
     join pools p on p.id = m.pool_id
     left join results r on r.member_id = m.id and r.day = p_day
