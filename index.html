@@ -73,6 +73,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
 .stopsub{grid-column:2/4;font-family:var(--f-mono);font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
 .tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--route);color:var(--route);border-radius:4px;padding:0 5px}
 .hintcard .stopcity{font-size:24px}
+.stopcity.long{font-size:22px}
 
 .progress{display:flex;gap:4px}
 .progress i{flex:1;height:6px;border-radius:3px;background:var(--line)}
@@ -235,7 +236,7 @@ h1 span{color:var(--amber)}
     <ol>
       <li>Elke dag één speler uit de Eredivisie of de Premier League. Je volgt zijn carrière als reisroute over de kaart.</li>
       <li>Elke route heeft een niveau: <b>makkelijk</b> (sterren), <b>gemiddeld</b> (culthelden) of <b>moeilijk</b> (spelers zonder A-interland).</li>
-      <li>Je ziet steeds de volgende stad, het land, het jaar van aankomst en hoeveel wedstrijden en goals hij daar maakte. Welke club het was, blijft geheim. Elke club is een eigen stop, ook als hij in dezelfde stad bleef.</li>
+      <li>Je ziet steeds de volgende club, de stad, het jaar van aankomst en hoeveel wedstrijden en goals hij daar maakte. Elke club is een eigen stop.</li>
       <li>Na elke stop noem je een speler. Pas dan reis je verder: een foute gok brengt je naar de volgende stop. Overslaan kan niet.</li>
       <li>Na de laatste stop krijg je nog zijn positie en nationaliteit. Hoe eerder je hem raadt, hoe beter.</li>
       <li>Carrières volgens Transfermarkt, gecontroleerd met Wikidata; bij verschillen geldt Transfermarkt. Wedstrijden en goals zijn alle officiële clubwedstrijden in die periode. Jeugdteams tellen niet mee; een stippellijn betekent een huurperiode.</li>
@@ -477,8 +478,8 @@ function render(jump){
   if (state.done) $("card").innerHTML = "";
   else if (st <= puzzle.stops.length) {
     const s = puzzle.stops[st-1];
-    $("card").innerHTML = `<div class="stopcard"><div class="stopno">${st}</div><div class="stopcity">${s.city}</div><div class="stopyear">${s.year}</div>
-      ${statLine(s,"stopstat")}<div class="stopsub"><span>${FLAG[s.cc]||""} ${COUNTRY[s.cc]||""}</span>${s.loan?'<span class="tag">Huur</span>':""}<span>stop ${st}</span>${state.hint?`<span class="tag">Positie: ${puzzle.pos}</span>`:""}</div></div>`;
+    $("card").innerHTML = `<div class="stopcard"><div class="stopno">${st}</div><div class="stopcity${clubName(s).length>14?" long":""}">${clubName(s)}</div><div class="stopyear">${s.year}</div>
+      ${statLine(s,"stopstat")}<div class="stopsub"><span>${FLAG[s.cc]||""} ${s.city}</span>${s.loan?'<span class="tag">Huur</span>':""}<span>stop ${st}</span>${state.hint?`<span class="tag">Positie: ${puzzle.pos}</span>`:""}</div></div>`;
   } else {
     const isPos = extras()[st-puzzle.stops.length-1] === "pos";
     $("card").innerHTML = `<div class="stopcard hintcard"><div class="stopno">+</div><div class="stopcity">${isPos?puzzle.pos:puzzle.nat}</div><div></div>
@@ -495,11 +496,12 @@ function render(jump){
   let km=0; for(let i=1;i<n;i++) km+=hav(stops[i-1],stops[i]);
   $("km").textContent = n>1 ? "afgelegd: "+Math.round(km).toLocaleString("nl-NL")+" km" : "";
   $("log").innerHTML = stops.map((s,i)=>{const e=state.log.find(l=>l.step===i+1);
-    const club = state.done ? `<div class="club"><b>${s.clubs.join(" + ")}</b>${s.loan?" (huur)":""}</div>` : "";
-    return `<li><span class="n">${String(i+1).padStart(2,"0")}</span><span class="c">${FLAG[s.cc]||""} ${s.city}</span><span class="y">${s.year}</span>${statLine(s,"stat")}${club}${guessLine(e)}</li>`}).join("")
+    const club = `<div class="club">${s.city}${s.loan?" · huur":""}</div>`;
+    return `<li><span class="n">${String(i+1).padStart(2,"0")}</span><span class="c">${FLAG[s.cc]||""} ${clubName(s)}</span><span class="y">${s.year}</span>${club}${statLine(s,"stat")}${guessLine(e)}</li>`}).join("")
     + state.log.filter(l=>l.step>puzzle.stops.length).map(e=>`<li><span class="n">+</span><span class="c">${extras()[e.step-puzzle.stops.length-1]==="pos"?"Positie: "+puzzle.pos:"Nationaliteit: "+puzzle.nat}</span><span class="y"></span>${guessLine(e)}</li>`).join("");
   renderResult();
 }
+const clubName = s => s.clubs.join(" + ");
 const statLine = (s,cls) => s.apps==null ? "" : `<div class="${cls}">${s.apps} ${s.apps===1?"wedstrijd":"wedstrijden"} · ${s.goals} ${s.goals===1?"goal":"goals"}</div>`;
 const guessLine = e => !e ? "" : e.gaveUp ? `<span class="g skip">🏳️ kleine speler</span>` : e.ok ? `<span class="g good">✓ ${e.name}</span>` : e.name ? `<span class="g bad">✕ ${e.name}</span>` : `<span class="g skip">→ doorgereisd</span>`;
 
