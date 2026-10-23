@@ -206,6 +206,7 @@ h1 span{color:var(--amber)}
 .board td{padding:10px 6px;border-top:1px solid var(--line);vertical-align:middle}
 .board .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .board .rk{width:18px;font:600 13px var(--f-mono);color:var(--route)}
+.board .rk.medal{font-size:20px;width:26px;text-align:center}
 .board .nm{font-weight:700;overflow-wrap:anywhere}
 .board .nm small{font-weight:500;color:var(--muted)}
 .board .td{white-space:nowrap;font-size:14px}
@@ -801,7 +802,7 @@ async function poolBoard(){
     else if (r.outcome==="won") today = `<span class="td">🟩 stop ${r.stop}${r.hint?" 💡":""}</span>`;
     else if (r.outcome==="gaveup") today = `<span class="td">🏳️ opgegeven</span>`;
     else today = `<span class="td">❌ niet herkend</span>`;
-    return `<tr class="${r.is_me?"me":""}"><td class="rk">${rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
+    return `<tr class="${r.is_me?"me":""}"><td class="rk${r[key]>0&&rank<=3?" medal":""}">${r[key]>0&&rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
   }).join("");
   $("poolBody").innerHTML = `
     <h2 id="poolTitle">${esc(p.name)}</h2>
