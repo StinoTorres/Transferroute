@@ -506,7 +506,7 @@ function shareText(){
   const s=state.step, n=puzzle.stops.length;
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
   const missed = !state.won && !state.gaveUp;
-  const end = missed ? "❌ niet herkend" : state.gaveUp ? "🏳️ kleine speler" : null;
+  const end = missed ? "❌ niet herkend" : state.gaveUp ? "❌🏳️ kleine speler" : null;
   const head = `Transferroute ${dayDate(day)} (${LVL[puzzle.lvl].toLowerCase()})` + (end ? "" : ` ${res}`) + (state.hint?" 💡":"");
   return `${head}\n${end || marks}\nhttps://stinotorres.github.io/Transferroute/`;
 }
