@@ -441,7 +441,9 @@ let day, puzzle, state, wholeRoute=false;
 // hints na de laatste stop; wie de positiehint al nam, krijgt alleen nog de nationaliteit
 const extras = () => state.hint ? ["nat"] : ["pos","nat"];
 const total = () => puzzle.stops.length + extras().length;
-const dayDate = d => new Date(START + d*864e5).toLocaleDateString("nl-NL",{day:"numeric",month:"short",timeZone:"UTC"}).replace(".","");
+const dayDate = d => { const t=new Date(START + d*864e5); return `${String(t.getUTCDate()).padStart(2,"0")}-${String(t.getUTCMonth()+1).padStart(2,"0")}-${t.getUTCFullYear()}`; };
+// 26-10-2026: Stijn jarig, dan feesttoeters in plaats van ballen
+const PARTY = new Set(["26-10-2026"]);
 function loadDaily(){
   day=todayIndex();
   puzzle = PLAYERS[ORDER[((day%ORDER.length)+ORDER.length)%ORDER.length]];
@@ -581,7 +583,8 @@ function shareText(){
   const res = state.gaveUp ? "kleine speler" : state.won ? (s<=n?`stop ${s}`:"extra hint") : "niet herkend";
   const missed = !state.won && !state.gaveUp;
   const end = missed ? "❌ niet herkend" : state.gaveUp ? "❌🏳️ kleine speler 🤏" : null;
-  const head = `⚽️ ${dayDate(day)} ⚽️\nTransferroute` + (state.hint?" 💡":"");
+  const deco = PARTY.has(dayDate(day)) ? "🎉" : "⚽️";
+  const head = `${deco} ${dayDate(day)} ${deco}\nTransferroute` + (state.hint?" 💡":"");
   const squares = state.log.filter(l=>!l.gaveUp).length;
   const st = getStats().streak || 0;
   const streak = st > 0 ? `🔥 Reeks: ${st} ${st===1?"dag":"dagen"}` : "💔 Reeks: 0";
