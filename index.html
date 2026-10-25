@@ -220,6 +220,9 @@ h1 span{color:var(--amber)}
 .stopcard.kit{box-shadow:inset 7px 0 0 var(--c1),inset 12px 0 0 var(--c2),0 6px 18px rgba(0,0,0,.18);padding-left:24px}
 .stopcity .swatch{display:inline-block;width:.62em;height:.62em;border-radius:50%;margin-right:.32em;vertical-align:.08em;background:linear-gradient(90deg,var(--c1) 50%,var(--c2) 50%);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
 .log .n.kit{background:var(--c1);color:var(--ct);box-shadow:inset 0 -3px 0 var(--c2)}
+.ballrain{position:fixed;inset:0;pointer-events:none;z-index:41;overflow:hidden}
+.ballrain span{position:absolute;top:-60px;line-height:1;animation-name:ballfall;animation-timing-function:cubic-bezier(.45,0,.9,.6);animation-fill-mode:forwards;filter:drop-shadow(0 3px 3px rgba(0,0,0,.25))}
+@keyframes ballfall{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--drift),calc(100vh + 120px)) rotate(var(--spin))}}
 </style>
 
 <div class="wrap">
@@ -412,6 +415,15 @@ function flyBall(){
 }
 
 
+// regen van voetballen bij elk goed antwoord
+function ballRain(n){
+  const box=document.createElement("div"); box.className="ballrain"; box.setAttribute("aria-hidden","true");
+  for(let i=0;i<n;i++){ const b=document.createElement("span"); b.textContent="⚽";
+    const size=18+Math.random()*26, dur=1.8+Math.random()*1.6, delay=Math.random()*1.2;
+    b.style.cssText=`left:${Math.random()*100}vw;font-size:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;--spin:${(Math.random()<.5?-1:1)*(360+Math.random()*540)}deg;--drift:${(Math.random()-.5)*80}px`;
+    box.appendChild(b); }
+  document.body.appendChild(box); setTimeout(()=>box.remove(),5200);
+}
 function celebrate(){
   const first=state.step===1, img=$("proudImg"), file=puzzle.img;
   img.hidden=!file; $("proudBall").hidden=!!file; $("proudCredit").hidden=!file;
@@ -422,7 +434,9 @@ function celebrate(){
   $("proudTitle").textContent = first ? "Griek is trots." : "Goed geraden!";
   $("proudText").innerHTML = `Het was <b>${puzzle.n}</b>.` + (first ? " Jij bent een echte magistralis." : "");
   const m=$("proud"); m.hidden=false; $("proudClose").focus();
-  if (!first || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  ballRain(first ? 40 : 26);
+  if (!first) return;
   const c=document.createElement("canvas"); c.className="confetti"; document.body.appendChild(c);
   const ctx=c.getContext("2d"), dpr=window.devicePixelRatio||1;
   const W=c.width=innerWidth*dpr, H=c.height=innerHeight*dpr;
