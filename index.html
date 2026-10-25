@@ -223,6 +223,9 @@ h1 span{color:var(--amber)}
 .ballrain{position:fixed;inset:0;pointer-events:none;z-index:41;overflow:hidden}
 .ballrain span{position:absolute;top:-60px;line-height:1;animation-name:ballfall;animation-timing-function:cubic-bezier(.45,0,.9,.6);animation-fill-mode:forwards;filter:drop-shadow(0 3px 3px rgba(0,0,0,.25))}
 @keyframes ballfall{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--drift),calc(100vh + 120px)) rotate(var(--spin))}}
+.sheet.move p{margin:0}
+.mstep{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.mstep textarea{font:500 13px var(--f-mono);padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
 </style>
 
 <div class="wrap">
@@ -251,6 +254,21 @@ h1 span{color:var(--amber)}
       <li><b>Griek moet ze altijd weten.</b></li>
     </ol>
     <button class="btn" type="button" id="rulesClose">Begin met reizen</button>
+    <button class="btn ghost" type="button" id="moveOpen">Voortgang overzetten</button>
+   </div>
+  </div>
+
+  <div class="modal" id="move" hidden role="dialog" aria-modal="true" aria-labelledby="moveTitle">
+   <div class="sheet move">
+    <h2 id="moveTitle">Voortgang overzetten</h2>
+    <p class="psmall">Speel je op twee plekken, bijvoorbeeld in Safari en via het icoon op je beginscherm? Die onthouden elk hun eigen voortgang. Zo neem je je reeks, statistieken, de stand van vandaag en je poules mee.</p>
+    <div class="mstep"><b>1. Op de plek waar je voortgang staat</b>
+      <button class="btn" type="button" id="moveCopy">Kopieer mijn voortgang</button></div>
+    <div class="mstep"><b>2. Op de nieuwe plek</b>
+      <textarea id="moveIn" rows="3" placeholder="Plak hier de gekopieerde voortgang" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+      <div class="perr" id="moveErr"></div>
+      <button class="btn" type="button" id="moveGo">Overnemen</button></div>
+    <button class="btn ghost" type="button" id="moveClose">Sluiten</button>
    </div>
   </div>
 
@@ -624,7 +642,7 @@ function installHint(){
   const android=/Android/.test(ua);
   const installed=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
   if((!ios&&!android)||installed||store.get("tr-install-dismissed",false)) return;
-  if(!$("rules").hidden||!$("proud").hidden||!$("yday").hidden||!$("pool").hidden){ setTimeout(installHint,2500); return; }
+  if(!$("rules").hidden||!$("proud").hidden||!$("yday").hidden||!$("pool").hidden||!$("move").hidden){ setTimeout(installHint,2500); return; }
   const box=$("iosInstall"), txt=$("iosText"), B=s=>"<strong>"+s+"</strong>";
   box.classList.remove("inapp","android"); $("iosCopy").hidden=true; $("installBtn").hidden=true;
   if(ios){
@@ -876,6 +894,52 @@ if (POOL_ON){
   $("poolX").onclick = closePool;
   $("pool").addEventListener("click", e=>{ if (e.target.id==="pool") closePool(); });
   document.addEventListener("keydown", e=>{ if (e.key==="Escape" && !$("pool").hidden) closePool(); });
+}
+
+// ---- voortgang overzetten tussen Safari, beginscherm-app, andere browser ----
+const MOVE_KEYS = ["tr2-stats","tr-seen-rules","tr-yday-shown","tr-pools","tr-pool-sent","tr-pool-tab","tr-nick"];
+function moveExport(){
+  const o={v:1,k:{}};
+  for (const k of MOVE_KEYS){ const v=localStorage.getItem(k); if (v!=null) o.k[k]=v; }
+  for (const d of [day-1,day]){ const v=localStorage.getItem("tr6-day-"+d); if (v!=null) o.k["tr6-day-"+d]=v; }
+  const b=btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  return b.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function moveParse(txt){
+  const m=/over=([A-Za-z0-9_-]+)/.exec(txt); const c=(m?m[1]:txt).replace(/\s+/g,"");
+  const b=c.replace(/-/g,"+").replace(/_/g,"/");
+  const o=JSON.parse(decodeURIComponent(escape(atob(b+"===".slice((b.length+3)%4)))));
+  if (!o||o.v!==1||typeof o.k!=="object") throw 0;
+  return o.k;
+}
+function moveApply(k){
+  for (const [key,v] of Object.entries(k)) if (/^(tr-|tr2-|tr6-day-\d+$)/.test(key)) { JSON.parse(v); localStorage.setItem(key,v); }
+  location.replace(location.pathname);
+}
+async function moveCopy(){
+  const url=SITE+"#over="+moveExport();
+  const text="Mijn Transferroute-voortgang. Plak dit bij 'Voortgang overzetten' op de andere plek, of open de link:\n"+url;
+  try { await navigator.clipboard.writeText(text); toast("Gekopieerd. Plak het op de andere plek"); }
+  catch(e){ $("moveIn").value=url; $("moveIn").select(); toast("Kopieer de tekst in het vak"); }
+}
+function openMove(){ $("rules").hidden=true; $("move").hidden=false; $("moveErr").textContent=""; $("moveCopy").focus(); }
+function closeMove(){ $("move").hidden=true; history.replaceState&&location.hash&&history.replaceState(null,"",location.pathname+location.search); }
+$("moveOpen").onclick=openMove; $("moveClose").onclick=closeMove; $("moveCopy").onclick=moveCopy;
+$("move").addEventListener("click",e=>{ if(e.target.id==="move") closeMove(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("move").hidden) closeMove(); });
+$("moveGo").onclick=()=>{
+  let k; try { k=moveParse($("moveIn").value.trim()); } catch(e){ $("moveErr").textContent="Dit is geen geldige voortgang. Kopieer hem opnieuw."; return; }
+  const cur=getStats(), inc=JSON.parse(k["tr2-stats"]||"null");
+  if (inc && cur.played>inc.played && $("moveGo").dataset.sure!=="1"){
+    $("moveGo").dataset.sure="1"; $("moveGo").textContent="Toch overnemen";
+    $("moveErr").textContent=`Hier heb je al ${cur.played} keer gespeeld, in de geplakte voortgang ${inc.played} keer. Overnemen vervangt wat hier staat.`; return;
+  }
+  try { moveApply(k); } catch(e){ $("moveErr").textContent="Overnemen lukte niet."; }
+};
+// geopend via een link met #over=...: vul het vak alvast in
+if (/[#&]over=/.test(location.hash)){
+  $("rules").hidden=true; store.set("tr-seen-rules",true);
+  setTimeout(()=>{ $("yday").hidden=true; openMove(); $("moveIn").value=location.href; },0);
 }
 
 setVB([FX,FY,FW,FW*0.75]);
