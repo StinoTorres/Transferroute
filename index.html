@@ -226,6 +226,7 @@ h1 span{color:var(--amber)}
 .sheet.move p{margin:0}
 .mstep{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px}
 .mstep textarea{font:500 13px var(--f-mono);padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
+.board .cups{font:700 13px var(--f-body);white-space:nowrap;color:var(--fg)}
 </style>
 
 <div class="wrap">
@@ -843,7 +844,7 @@ async function poolBoard(){
     else if (r.outcome==="won") today = `<span class="td">🟩 stop ${r.stop}${r.hint?" 💡":""}</span>`;
     else if (r.outcome==="gaveup") today = `<span class="td">🏳️ opgegeven</span>`;
     else today = `<span class="td">❌ niet herkend</span>`;
-    return `<tr class="${r.is_me?"me":""}"><td class="rk${r[key]>0&&rank<=3?" medal":""}">${r[key]>0&&rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</td><td class="nm">${esc(r.nickname)}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
+    return `<tr class="${r.is_me?"me":""}"><td class="rk${r[key]>0&&rank<=3?" medal":""}">${r[key]>0&&rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</td><td class="nm">${esc(r.nickname)}${r.cups>0?` <span class="cups" title="${r.cups} keer weekwinnaar">🏆${r.cups>1?"×"+r.cups:""}</span>`:""}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
   }).join("");
   $("poolBody").innerHTML = `
     <h2 id="poolTitle">${esc(p.name)}</h2>
@@ -856,7 +857,7 @@ async function poolBoard(){
     </div>
     <p class="pool-sub">${poolTab==="total" ? "Totaalstand · sinds de start van de poule" : "Weekstand · vandaag "+dayDate(day)}</p>
     <table class="board"><thead><tr><th></th><th>Speler</th><th>Vandaag</th><th class="num">Reeks</th><th class="num">Ptn</th></tr></thead><tbody>${body}</tbody></table>
-    <p class="psmall">Punten: je begint elke dag met 10. Elke stop verder kost 1 punt en de hint ook 1. Herkend levert altijd minstens 1 punt op; niet herkend of opgegeven is 0. De weekstand begint elke maandag opnieuw; het totaal telt door.</p>
+    <p class="psmall">Punten: je begint elke dag met 10. Elke stop verder kost 1 punt en de hint ook 1. Herkend levert altijd minstens 1 punt op; niet herkend of opgegeven is 0. De weekstand begint elke maandag opnieuw; het totaal telt door. Wie een week wint, krijgt een 🏆 die blijft staan. Bij een gelijke stand krijgen beide winnaars er een.</p>
     <button class="btn" type="button" id="pInvite">Nodig vrienden uit</button>
     <div class="pool-foot"><span class="psmall">Code <b>${esc(p.code)}</b> · jij bent ${esc(p.nick)}</span><button class="mini" type="button" id="pLeave">Verlaat poule</button></div>
     <p class="psmall">We bewaren alleen je bijnaam en je uitslag per dag. Verlaat je de poule, dan wissen we die.</p>`;
