@@ -727,24 +727,35 @@ async function rpc(fn, args){
   }
   return j;
 }
-function myResult(){
-  if (!state || !state.done) return null;
-  return {p_day:day, p_outcome: state.won?"won":state.gaveUp?"gaveup":"missed", p_stop: state.won?state.step:null,
-          p_guesses: state.log.filter(l=>!l.gaveUp).length, p_hint: !!state.hint};
+function myResult(d=day){
+  const st = d===day ? state : store.get("tr6-day-"+d, null);
+  if (!st || !st.done) return null;
+  return {p_day:d, p_outcome: st.won?"won":st.gaveUp?"gaveup":"missed", p_stop: st.won?st.step:null,
+          p_guesses: (st.log||[]).filter(l=>!l.gaveUp).length, p_hint: !!st.hint};
 }
 // Stuur de uitslag van vandaag naar al je poules (één keer per poule per dag).
 function poolSubmit(){
   if (!POOL_ON || !POOL_HERE) return Promise.resolve();
   return submitting = (submitting||Promise.resolve()).then(async ()=>{
-    const r = myResult(); if (!r) return;
+    const r = myResult(); if (!r && !myPools().some(p=>!store.get("tr-pool-back",{})[p.member])) return;
     const sent = store.get("tr-pool-sent", {});
     for (const k of Object.keys(sent)) if (+k.split(":")[1] < day-3) delete sent[k];
+    const back = store.get("tr-pool-back", {});
     for (const p of myPools()){
-      const k = p.member+":"+day; if (sent[k]) continue;
+      // eenmalig: eerdere dagen die je op dit toestel speelde tellen alsnog mee (bijv. als je later bent ingestapt)
+      if (!back[p.member]){
+        let ok = true;
+        for (let d=0; d<day; d++){ const o=myResult(d); if (!o) continue;
+          try { await rpc("submit_result", {p_member:p.member, p_secret:p.secret, ...o}); }
+          catch(e){ if (e.gone){ dropPool(p.member); ok=false; break; } }
+        }
+        if (ok) back[p.member]=1;
+      }
+      const k = p.member+":"+day; if (!r || sent[k]) continue;
       try { await rpc("submit_result", {p_member:p.member, p_secret:p.secret, ...r}); sent[k]=1; }
       catch(e){ if (e.gone) dropPool(p.member); }
     }
-    store.set("tr-pool-sent", sent);
+    store.set("tr-pool-sent", sent); store.set("tr-pool-back", back);
   });
 }
 function dropPool(member){ setPools(myPools().filter(p=>p.member!==member)); }
@@ -898,7 +909,7 @@ if (POOL_ON){
 }
 
 // ---- voortgang overzetten tussen Safari, beginscherm-app, andere browser ----
-const MOVE_KEYS = ["tr2-stats","tr-seen-rules","tr-yday-shown","tr-pools","tr-pool-sent","tr-pool-tab","tr-nick"];
+const MOVE_KEYS = ["tr2-stats","tr-seen-rules","tr-yday-shown","tr-pools","tr-pool-sent","tr-pool-tab","tr-nick","tr-pool-back"];
 function moveExport(){
   const o={v:1,k:{}};
   for (const k of MOVE_KEYS){ const v=localStorage.getItem(k); if (v!=null) o.k[k]=v; }
