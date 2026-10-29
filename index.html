@@ -855,7 +855,7 @@ async function poolBoard(){
     else if (r.outcome==="won") today = `<span class="td">🟩 stop ${r.stop}${r.hint?" 💡":""}</span>`;
     else if (r.outcome==="gaveup") today = `<span class="td">🏳️ opgegeven</span>`;
     else today = `<span class="td">❌ niet herkend</span>`;
-    return `<tr class="${r.is_me?"me":""}"><td class="rk${r[key]>0&&rank<=3?" medal":""}">${r[key]>0&&rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</td><td class="nm">${esc(r.nickname)}${r.cups>0?` <span class="cups" title="${r.cups} keer weekwinnaar">🏆${r.cups>1?"×"+r.cups:""}</span>`:""}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
+    return `<tr class="${r.is_me?"me":""}"><td class="rk${r[key]>0&&rank<=3?" medal":""}">${r[key]>0&&rank<=3?["🥇","🥈","🥉"][rank-1]:rank}</td><td class="nm">${esc(r.nickname)}${r.cups>0?` <span class="cups" title="${r.cups} keer weekwinnaar">🏆${r.cups>1?" x"+r.cups:""}</span>`:""}${r.is_me?" <small>(jij)</small>":""}</td><td>${today}</td><td class="num">${r.streak>0?"🔥 "+r.streak:"–"}</td><td class="num pts">${r[key]}</td></tr>`;
   }).join("");
   $("poolBody").innerHTML = `
     <h2 id="poolTitle">${esc(p.name)}</h2>
